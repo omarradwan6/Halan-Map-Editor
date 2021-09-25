@@ -1,0 +1,75 @@
+#loginDiv {
+  height: 100vh;
+  background-color: #2b2d42;
+}
+
+
+
+
+#form {
+  width: 70vh;
+}
+
+body {
+  color: white;
+}
+
+#loader{
+  position: absolute;
+  z-index: 300;
+  top:45%;
+  left:45%;
+}
+
+#loginButton {
+  text-align: center;
+  margin-top: 0.5rem;
+  width: 70vh;
+  background-color: #616594;
+  border: none;
+}
+
+#loginButton:hover {
+  background-color: #51547b;
+  transition: 0.5s ease;
+}
+
+.mapButtons {
+  background-color: #8486ae;
+  border-color: none;
+  color: white;
+}
+
+.mapButtons:hover {
+  background-color: #51547b;
+  transition: 0.5s ease;
+  border-color: none;
+}
+
+#textBox,
+#colorPicker {
+  background-color: unset;
+  color: white;
+}
+
+#nav {
+  background-color: #585D89;
+}
+
+.navbar-brand,
+.navbar-brand:hover {
+  color: white;
+}
+
+#logout {
+  color: white;
+}
+
+#logOutIcon{
+  font-size: 1.5rem;
+}
+
+.container-fluid {
+  padding: 0px;
+}
+
