@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useHistory } from "react-router-dom";
 import { saveToken } from "./Functions/saveToken";
-import "./styling.css"
+import { login } from "./Functions/apiRequests";
+import "./styling.css";
 
 function LoginPage(props) {
   const [username, setUsername] = useState("");
@@ -17,13 +18,11 @@ function LoginPage(props) {
     setPassword(e.target.value);
   };
 
+  //Send api request with username and password. Save token and then switch to map screen if successful
   const onSubmit = async (e) => {
     e.preventDefault();
     try {
-      let response = await axios.post(
-        "https://zones-backend-halan.herokuapp.com/login",
-        { username, password }
-      );
+      let response = await login(username, password);
       saveToken(response.data.token);
       history.push("/map");
     } catch (error) {
@@ -33,10 +32,17 @@ function LoginPage(props) {
   };
 
   return (
-    <div id="loginDiv" className="container-fluid d-flex justify-content-center align-items-center">
-      
+    <div
+      id="loginDiv"
+      className="container-fluid d-flex justify-content-center align-items-center"
+    >
       <form id="form">
-      <div style={{letterSpacing:"0.25rem",color:"white"}} className="text-center"><h3>Halan Map Editor</h3></div>
+        <div
+          style={{ letterSpacing: "0.25rem", color: "white" }}
+          className="text-center"
+        >
+          <h3>Halan Map Editor</h3>
+        </div>
 
         <div className="form-group mt-2">
           <input
@@ -57,9 +63,14 @@ function LoginPage(props) {
           />
         </div>
         <div className="d-flex justify-content-center">
-        <button id="loginButton" onClick={onSubmit} type="submit" class="btn btn-primary">
-          Login
-        </button>
+          <button
+            id="loginButton"
+            onClick={onSubmit}
+            type="submit"
+            class="btn btn-primary"
+          >
+            Login
+          </button>
         </div>
       </form>
     </div>

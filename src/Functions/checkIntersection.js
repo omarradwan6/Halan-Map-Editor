@@ -33,14 +33,18 @@ const drawIntersectionArea = (map, polygon) => {
   }
 };
 
+
+// checking intersection between zone and already created zones on map.
 export const checkIntersection = (zone, createdZones, map) => {
   let geometryFactory = new jsts.geom.GeometryFactory();
   let newZoneJst = createJstsPolygon(geometryFactory, zone);
   let clashed = false;
 
-  createdZones.forEach((a) => {
+  console.log(createdZones,"ininttt")
+
+  createdZones.forEach((points) => {
     try {
-      let createdZone = new google.maps.Polygon({ paths: a });
+      let createdZone = new google.maps.Polygon({ paths: points });
       let anotherPolygon = createJstsPolygon(geometryFactory, createdZone);
       var intersection = newZoneJst.intersection(anotherPolygon);
     } catch (e) {

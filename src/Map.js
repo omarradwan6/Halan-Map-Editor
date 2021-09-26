@@ -47,14 +47,17 @@ class Map extends React.Component {
     this.getZone = this.getZone.bind(this);
     this.updateZone = this.updateZone.bind(this);
     this.downloadZones = this.downloadZones.bind(this);
+    this.createPolygon = this.createPolygon.bind(this);
   }
 
   componentDidMount() {
+    // create google map instance and refer it to div with ref 'map'.
     this.map = new google.maps.Map(this.refs.map, {
       center: { lat: 30.0609, lng: 31.2197 },
       zoom: 8,
     });
 
+    // add rightclick event listener on map to deselect zone and close infowindow if opened.
     this.map.addListener("rightclick", () => {
       if (this.state.selectedInfoWindow) {
         this.state.selectedInfoWindow.close(this.map);
@@ -70,6 +73,7 @@ class Map extends React.Component {
       });
     });
 
+    // add click event listener on map to deselect zone and close infowindow if opened.
     this.map.addListener("click", () => {
       if (this.state.selectedInfoWindow) {
         this.state.selectedInfoWindow.close(this.map);
@@ -83,15 +87,19 @@ class Map extends React.Component {
         zoneColor: "",
       });
     });
+
+    //create drawing layer to enable drawing polygons on map then drawing existing zones from database.
     this.drawingManager = createDrawingManager();
     this.getZones();
   }
 
+  // get zones from database then drawing them on map.
   async getZones() {
-    let zonesPaths = this.state.zonesPaths;
     try {
       let response = await getZones();
       var zones = response.data.data;
+
+      //looping over zones and converting lat and lng to float to be able to draw on map.
       zones.forEach((zoneObject) => {
         let points = zoneObject.points;
         let newPoints = points.map((a) => {
@@ -100,51 +108,63 @@ class Map extends React.Component {
         zoneObject.points = newPoints;
       });
 
+      // looping over zones and creating polygons for each zone and adding them to map.
       zones.forEach((zone) => {
-        let polygon = new google.maps.Polygon({
-          paths: zone.points,
-          strokeWeight: 1,
-          fillColor: zone.color,
-          fillOpacity: 0.35,
-        });
-        zonesPaths.push(zone.points);
-
-        let infowindow = new google.maps.InfoWindow({
-          content: zone.label,
-        });
-
-        polygon.addListener("click", (e) => {
-          if (this.state.selectedInfoWindow) {
-            this.state.selectedInfoWindow.close(this.map);
-          }
-          infowindow.setPosition(e.latLng);
-          infowindow.open(this.map);
-
-          this.setState({
-            selectedZone: polygon,
-            selectedZoneID: zone._id,
-            selectedZonePoints: zone.points,
-            zoneName: zone.label,
-            zoneColor: zone.color,
-            selectedInfoWindow: infowindow,
-          });
-        });
-        polygon.setMap(this.map);
+        this.createPolygon(zone);
       });
     } catch (error) {
       console.log(error);
     }
 
-    this.setState({ zonesPaths });
-    this.downloadZones()
+    this.downloadZones();
   }
 
-  async getZone(zoneName) {
+  // create Polygon with data retrieved from database.
+  createPolygon(zone) {
     let zonesPaths = this.state.zonesPaths;
 
+    let polygon = new google.maps.Polygon({
+      paths: zone.points,
+      strokeWeight: 1,
+      fillColor: zone.color,
+      fillOpacity: 0.35,
+    });
+    // add zone points to zonepaths array.
+    zonesPaths.push(zone.points);
+
+    //create infowindow for polygon with content of zone's name.
+    let infowindow = new google.maps.InfoWindow({
+      content: zone.label,
+    });
+
+    // create click event listener that shows the toggles the infowindow and selects the polygon.
+    polygon.addListener("click", (e) => {
+      if (this.state.selectedInfoWindow) {
+        this.state.selectedInfoWindow.close(this.map);
+      }
+      infowindow.setPosition(e.latLng);
+      infowindow.open(this.map);
+
+      this.setState({
+        selectedZone: polygon,
+        selectedZoneID: zone._id,
+        selectedZonePoints: zone.points,
+        zoneName: zone.label,
+        zoneColor: zone.color,
+        selectedInfoWindow: infowindow,
+      });
+    });
+    polygon.setMap(this.map);
+    this.setState({ zonesPaths });
+  }
+
+  // redraw a specific zone.
+  async getZone(zoneName) {
     try {
       let response = await getZones();
       var zones = response.data.data;
+
+      //draw zone
       zones.forEach((zoneObject) => {
         if (zoneObject.label === zoneName) {
           let points = zoneObject.points;
@@ -157,34 +177,7 @@ class Map extends React.Component {
 
       zones.forEach((zone) => {
         if (zone.label === zoneName) {
-          let polygon = new google.maps.Polygon({
-            paths: zone.points,
-            strokeWeight: 1,
-            fillColor: zone.color,
-            fillOpacity: 0.35,
-          });
-
-          let infowindow = new google.maps.InfoWindow({
-            content: zone.label,
-          });
-          zonesPaths.push(zone.points);
-
-          polygon.addListener("click", (e) => {
-            if (this.state.selectedInfoWindow) {
-              this.state.selectedInfoWindow.close(this.map);
-            }
-            infowindow.setPosition(e.latLng);
-            infowindow.open(this.map);
-
-            this.setState({
-              selectedZone: polygon,
-              selectedZoneID: zone._id,
-              selectedZonePoints: zone.points,
-              selectedInfoWindow: infowindow,
-              zoneName: zone.label,
-              zoneColor: zone.color,
-            });
-          });
+          this.createPolygon(zone);
 
           this.setState({
             selectedZone: null,
@@ -193,23 +186,25 @@ class Map extends React.Component {
             zoneName: "",
             zoneColor: "",
           });
-          polygon.setMap(this.map);
         }
       });
     } catch (error) {
       console.log(error);
     }
 
-    this.setState({ zonesPaths});
-    this.downloadZones()
+    this.downloadZones();
   }
 
+  // draw zone on map.
   drawZone(e) {
     e.preventDefault();
+    // drawing is only enabled when color and name are filled.
     if (this.state.zoneColor && this.state.zoneName) {
       this.setState({ drawZone: true });
-      this.drawingManager.setMap(this.map);
 
+      //open drawing layer
+      this.drawingManager.setMap(this.map);
+      // an event listener to listen when a polygon is completed.
       google.maps.event.addListener(
         this.drawingManager,
         "polygoncomplete",
@@ -225,10 +220,11 @@ class Map extends React.Component {
             });
 
           polygon.setOptions({ fillColor: this.state.zoneColor });
+
+          // checking if new polygon intersects with previous drawn polygons.
           if (!checkIntersection(polygon, this.state.zonesPaths, this.map)) {
             try {
               await this.setState({ loading: true });
-
               let response = await createZone(
                 this.state.zoneName,
                 this.state.zoneColor,
@@ -237,13 +233,19 @@ class Map extends React.Component {
               this.setState({ loading: false });
             } catch (error) {
               console.log(e);
+              this.setState({ loading: false });
+              alert("Zone creation failed.");
             }
           } else {
             alert("Zone intersects with previously created zone.");
             polygon.setMap(null);
           }
+
+          // removing drawing layer
           this.drawingManager.setMap(null);
           this.drawingManager = createDrawingManager();
+
+          // removing the polygon and redrawing it from database to get the id and enable editing and deleting.
           await this.getZone(this.state.zoneName);
           polygon.setMap(null);
           this.setState({ drawZone: false, zoneName: "", zoneColor: "" });
@@ -254,6 +256,7 @@ class Map extends React.Component {
     }
   }
 
+  // enabling cancelling mid drawing process.
   cancelDrawing(e) {
     e.preventDefault();
     this.drawingManager.setMap(null);
@@ -261,8 +264,11 @@ class Map extends React.Component {
     this.setState({ zoneColor: "", zoneName: "", drawZone: false });
   }
 
+  // delete selected zone.
   async deleteZone(e) {
     e.preventDefault();
+
+    // getting selected zone data
     let polygon = this.state.selectedZone;
     let polygonID = this.state.selectedZoneID;
     let polygonPoints = this.state.selectedZonePoints;
@@ -273,9 +279,13 @@ class Map extends React.Component {
       let response = await deleteZone(polygonID);
       this.setState({ loading: false });
       polygon.setMap(null);
+
+      // closing zone's infowindow if opened.
       if (this.state.selectedInfoWindow) {
         this.state.selectedInfoWindow.close(this.map);
       }
+
+      //deleting zone's points from points array and deselecting the zone.
       let newZonesPaths = deletePoints(zonesPaths, polygonPoints);
       this.setState({
         selectedZone: null,
@@ -287,13 +297,18 @@ class Map extends React.Component {
       });
     } catch (error) {
       console.log(error);
+      this.setState({ loading: false });
+      alert("Zone deletion failed.");
     }
 
     this.downloadZones();
   }
 
+  // editing selected zone.
   async updateZone(e) {
     e.preventDefault();
+
+    //getting selected zone's data.
     let polygonPoints = this.state.selectedZonePoints;
     let polygon = this.state.selectedZone;
     let polygonID = this.state.selectedZoneID;
@@ -310,11 +325,14 @@ class Map extends React.Component {
       );
       this.setState({ loading: false });
 
+      //removing drawing layer.
       this.drawingManager.setMap(null);
       this.drawingManager = createDrawingManager();
+      // removing the polygon and redrawing it from database to get the id and enable editing and deleting.
       await this.getZone(zoneName);
       polygon.setMap(null);
 
+      // closing zone's infowindow if opened and deselecting the zone.
       if (this.state.selectedInfoWindow) {
         this.state.selectedInfoWindow.close(this.map);
       }
@@ -329,24 +347,25 @@ class Map extends React.Component {
       });
     } catch (error) {
       console.log(error);
+      this.setState({ loading: false });
+      alert("Zone editing failed.");
     }
     this.downloadZones();
   }
 
+  // prepare zones data for data export.
   async downloadZones() {
     let response = await getZones();
 
     let zones = response.data.data;
 
+    // create pointstring that includes all points per zone to be exported to csv.
     zones.forEach((zone) => {
-      let pointString=""
-      console.log(zone,"zzzzzzzzz")
-    zone.points.forEach((point) => {
-        console.log(point,"Assasa")
-        pointString=`${pointString} [Lat:${point.lat}, Lng:${point.lng} ]`
-
+      let pointString = "";
+      zone.points.forEach((point) => {
+        pointString = `${pointString} [Lat:${point.lat}, Lng:${point.lng} ]`;
       });
-      zone.points=pointString
+      zone.points = pointString;
     });
 
     this.setState({ savedZones: zones });
@@ -398,7 +417,7 @@ class Map extends React.Component {
                 data-bs-placement="top"
                 title="Draw New Zone"
                 className={`btn mapButtons ${
-                  this.state.drawZone || this.state.loading  ? "disabled" : ""
+                  this.state.drawZone || this.state.loading ? "disabled" : ""
                 }`}
                 onClick={this.drawZone}
               >
@@ -411,7 +430,7 @@ class Map extends React.Component {
                 data-bs-placement="top"
                 title="Cancel Drawing process"
                 className={`btn mapButtons ${
-                  !this.state.drawZone || this.state.loading  ? "disabled" : ""
+                  !this.state.drawZone || this.state.loading ? "disabled" : ""
                 }`}
                 onClick={this.cancelDrawing}
               >
@@ -426,7 +445,9 @@ class Map extends React.Component {
                 data-bs-placement="top"
                 title="Edit Zone"
                 className={`btn mapButtons ${
-                  !this.state.selectedZone || this.state.loading  ? "disabled" : ""
+                  !this.state.selectedZone || this.state.loading
+                    ? "disabled"
+                    : ""
                 }`}
                 onClick={this.updateZone}
               >
@@ -439,7 +460,9 @@ class Map extends React.Component {
                 data-bs-placement="top"
                 title="Delete Zone"
                 className={`btn mapButtons ${
-                  !this.state.selectedZone || this.state.loading ? "disabled" : ""
+                  !this.state.selectedZone || this.state.loading
+                    ? "disabled"
+                    : ""
                 }`}
                 onClick={this.deleteZone}
               >
@@ -451,7 +474,9 @@ class Map extends React.Component {
                 data-bs-toggle="tooltip"
                 data-bs-placement="top"
                 title="Download Zones Data"
-                className={`btn mapButtons ${this.state.loading ? "disabled":""}`}
+                className={`btn mapButtons ${
+                  this.state.loading ? "disabled" : ""
+                }`}
                 data={this.state.savedZones}
                 filename="Zones.csv"
               >

@@ -5,10 +5,12 @@ import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 import { saveToken } from "./Functions/saveToken";
 
 function Navbar() {
+
+  // cancel token when signing out.
   const signOut = () => {
     saveToken(null);
-    console.log(localStorage.getItem("token"))
   };
+
   return (
     <nav id="nav" class="navbar navbar-expand-lg">
       <div class="container-fluid">

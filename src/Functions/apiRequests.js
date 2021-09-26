@@ -1,6 +1,18 @@
 import axios from "axios";
 import { baseURL } from "./apiConfig";
 
+
+// api requests and returning the response.
+
+export function login(username,password){
+  let response =  axios.post(
+    "https://zones-backend-halan.herokuapp.com/login",
+    { username, password }
+  );
+
+  return response
+}
+
 export function getZones() {
   let response = axios.get(`${baseURL}/zones`, {
     headers: { Authorization: `Bearer ${localStorage.token}` },
