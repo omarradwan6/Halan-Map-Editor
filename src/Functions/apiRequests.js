@@ -5,7 +5,6 @@ import { baseURL } from "./apiConfig";
 
 export function login(username, password) {
   let response = axios.post(`${baseURL}/login`, { username, password });
-console.log(response,"rssss")
   return response;
 }
 
@@ -27,7 +26,6 @@ export function createZone(zoneName, zoneColor, coords) {
     },
     { headers: { Authorization: `Bearer ${localStorage.token}` } }
   );
-console.log(response,"el responssse")
   return response;
 }
 
