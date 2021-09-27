@@ -1,17 +1,15 @@
+
+body {
+  color: white;
+}
+
 #loginDiv {
   height: 100vh;
   background-color: #2b2d42;
 }
 
-
-
-
 #form {
   width: 70vh;
-}
-
-body {
-  color: white;
 }
 
 #loader{

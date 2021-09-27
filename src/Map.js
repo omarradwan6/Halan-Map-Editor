@@ -98,7 +98,7 @@ class Map extends React.Component {
     try {
       let response = await getZones();
       var zones = response.data.data;
-
+console.log(response)
       //looping over zones and converting lat and lng to float to be able to draw on map.
       zones.forEach((zoneObject) => {
         let points = zoneObject.points;
@@ -154,8 +154,9 @@ class Map extends React.Component {
         selectedInfoWindow: infowindow,
       });
     });
-    polygon.setMap(this.map);
+    
     this.setState({ zonesPaths });
+    polygon.setMap(this.map);
   }
 
   // redraw a specific zone.
@@ -178,6 +179,7 @@ class Map extends React.Component {
       zones.forEach((zone) => {
         if (zone.label === zoneName) {
           this.createPolygon(zone);
+
 
           this.setState({
             selectedZone: null,
@@ -234,7 +236,7 @@ class Map extends React.Component {
             } catch (error) {
               console.log(e);
               this.setState({ loading: false });
-              alert("Zone creation failed.");
+              alert("Zone creation failed. Zone name may be already used.");
             }
           } else {
             alert("Zone intersects with previously created zone.");
@@ -277,6 +279,9 @@ class Map extends React.Component {
     try {
       await this.setState({ loading: true });
       let response = await deleteZone(polygonID);
+      //deleting zone's points from points array.
+      let newZonesPaths = deletePoints(zonesPaths, polygonPoints);
+
       this.setState({ loading: false });
       polygon.setMap(null);
 
@@ -285,8 +290,7 @@ class Map extends React.Component {
         this.state.selectedInfoWindow.close(this.map);
       }
 
-      //deleting zone's points from points array and deselecting the zone.
-      let newZonesPaths = deletePoints(zonesPaths, polygonPoints);
+      //deselecting the zone.
       this.setState({
         selectedZone: null,
         selectedZoneID: null,

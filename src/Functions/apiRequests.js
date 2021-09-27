@@ -1,16 +1,12 @@
 import axios from "axios";
 import { baseURL } from "./apiConfig";
 
-
 // api requests and returning the response.
 
-export function login(username,password){
-  let response =  axios.post(
-    "https://zones-backend-halan.herokuapp.com/login",
-    { username, password }
-  );
-
-  return response
+export function login(username, password) {
+  let response = axios.post(`${baseURL}/login`, { username, password });
+console.log(response,"rssss")
+  return response;
 }
 
 export function getZones() {
@@ -31,7 +27,7 @@ export function createZone(zoneName, zoneColor, coords) {
     },
     { headers: { Authorization: `Bearer ${localStorage.token}` } }
   );
-
+console.log(response,"el responssse")
   return response;
 }
 
@@ -43,16 +39,15 @@ export function deleteZone(polygonID) {
   return response;
 }
 
-
-export function updateZone(polygonID,zoneName,zoneColor,zonePoints){
-  let response =  axios.put(
+export function updateZone(polygonID, zoneName, zoneColor, zonePoints) {
+  let response = axios.put(
     `${baseURL}/zones/${polygonID}`,
     {
-      label:zoneName,
-      color:zoneColor,
-      points:zonePoints
+      label: zoneName,
+      color: zoneColor,
+      points: zonePoints,
     },
     { headers: { Authorization: `Bearer ${localStorage.token}` } }
-    )
-    return response
+  );
+  return response;
 }

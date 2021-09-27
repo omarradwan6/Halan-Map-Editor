@@ -40,7 +40,6 @@ export const checkIntersection = (zone, createdZones, map) => {
   let newZoneJst = createJstsPolygon(geometryFactory, zone);
   let clashed = false;
 
-  console.log(createdZones,"ininttt")
 
   createdZones.forEach((points) => {
     try {
